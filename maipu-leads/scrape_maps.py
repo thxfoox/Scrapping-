@@ -65,8 +65,9 @@ def new_session(max_pages=3) -> AsyncStealthySession:
     )
 
 
-# Map tiles and fonts are rendered in software here and eat the CPU; the data never needs them.
-HEAVY = re.compile(r"/maps/vt|/kh/v=|/vt/pb=|\.woff2?(\?|$)")
+# Map tiles are rendered in software here and eat the CPU; the data never needs them.
+# (Fonts must load: without the icon font the reviews list stops paging.)
+HEAVY = re.compile(r"/maps/vt|/kh/v=|/vt/pb=")
 
 
 async def block_heavy(page):
@@ -246,6 +247,16 @@ EXPAND_JS = """
   .forEach(b => { try { b.click(); n++; } catch (e) {} }); return n; }
 """
 
+REVIEW_TOTAL_JS = """
+() => {
+  for (const e of document.querySelectorAll('[aria-label]')) {
+    const m = (e.getAttribute('aria-label') || '').trim().match(/^([\\d.,\\s]+)\\s*(opini|reseñ)/);
+    if (m) return parseInt(m[1].replace(/\\D/g, '')) || 0;
+  }
+  return 0;
+}
+"""
+
 TAB_SEL = ('button[role="tab"][aria-label^="Revisiones"], button[role="tab"][aria-label^="Reseñas"], '
            'button[role="tab"][aria-label^="Opiniones"]')
 
@@ -257,7 +268,7 @@ def make_place_action(store: dict, review_scrolls: int):
             await page.wait_for_selector("h1", timeout=15000)
         except Exception:
             pass
-        await page.wait_for_timeout(1500)
+        await page.wait_for_timeout(1000)
         if is_blocked(page.url, await page.content()):
             store["blocked"] = True
             return
@@ -284,14 +295,16 @@ def make_place_action(store: dict, review_scrolls: int):
         store["url"] = page.url
         if not await tab.count():
             return
+        total = await page.evaluate(REVIEW_TOTAL_JS)
         try:
             await tab.first.click()
-            # the overview already holds 3 reviews, so wait for the reviews list itself to fill
-            await page.wait_for_function("document.querySelectorAll('div.jftiEf').length >= 6", timeout=9000)
+            # the overview already holds up to 3 reviews, so wait for the reviews list itself to fill
+            await page.wait_for_function(f"document.querySelectorAll('div.jftiEf').length >= {min(6, max(total, 1))}",
+                                         timeout=9000)
         except Exception:
             pass
         await page.wait_for_timeout(900)
-        for _ in range(review_scrolls):
+        for _ in range(review_scrolls if total > 10 else 0):
             n = await page.evaluate(REVIEWS_JS_SCROLL)
             await page.wait_for_timeout(1100 + random.randint(0, 500))
             if n < 0:
