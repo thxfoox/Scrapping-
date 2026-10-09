@@ -245,6 +245,7 @@ PLATFORMS = {
     "didi-food.com": "DiDi Food", "agendapro.com": "AgendaPro", "fresha.com": "Fresha", "booksy.com": "Booksy",
     "linktr.ee": "Linktree", "wa.me": "WhatsApp", "wa.link": "WhatsApp", "whatsapp.com": "WhatsApp",
     "instagram.com": "Instagram", "sumupstore.com": "Tienda online", "mercadolibre.cl": "Mercado Libre",
+    "weibook.co": "Agenda online", "reservo.cl": "Agenda online",
     "facebook.com": "Facebook",
 }
 
@@ -297,7 +298,10 @@ def build():
             elif wa_info["phone_e164"] != p.get("phone_e164"):
                 wa_number = wa_info["phone"]
         score, breakdown = score_lead({**p, "is_mobile": p.get("is_mobile") or bool(extra_wa)}, a)
-        socials = p.get("socials", {})
+        socials = dict(p.get("socials", {}))
+        for net in ("instagram", "facebook"):  # profiles the business shows elsewhere (e.g. on its listing photo)
+            if a.get(net) and net not in socials:
+                socials[net] = a[net]
         wa = (f"https://wa.me/{extra_wa}" if extra_wa else "") or socials.get("whatsapp") or \
             (f"https://wa.me/{p['phone_e164'].lstrip('+')}" if p.get("is_mobile") else "")
         kind = a.get("atiende", "unknown")
