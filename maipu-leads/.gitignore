@@ -1,0 +1,4 @@
+data/photos/
+data/sheets/
+__pycache__/
+*.tmp
