@@ -243,7 +243,8 @@ def candidates(places: list[dict]) -> tuple[list[dict], dict]:
 PLATFORMS = {
     "ubereats.com": "Uber Eats", "pedidosya.cl": "PedidosYa", "pedidosya.com": "PedidosYa", "rappi.cl": "Rappi",
     "didi-food.com": "DiDi Food", "agendapro.com": "AgendaPro", "fresha.com": "Fresha", "booksy.com": "Booksy",
-    "linktr.ee": "Linktree", "wa.me": "WhatsApp", "whatsapp.com": "WhatsApp", "instagram.com": "Instagram",
+    "linktr.ee": "Linktree", "wa.me": "WhatsApp", "wa.link": "WhatsApp", "whatsapp.com": "WhatsApp",
+    "instagram.com": "Instagram",
     "facebook.com": "Facebook",
 }
 
