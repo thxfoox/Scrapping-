@@ -1,18 +1,29 @@
-"""Geometry of the target sector: the band between Av. Portales (north) and Av. Sur (south).
+"""Geometry of the target sector in Maipú.
 
-Both avenues run roughly east-west and parallel (~250-400 m apart), so "Av. Sur con Av. Portales"
-is a corridor, not a corner. Distances are measured to that band; inside it the distance is 0.
-Points were read off Google Maps (street pins, bus stops and numbered addresses on each avenue).
+Av. Portales, Av. Sur and Nueva San Martín run roughly east-west and parallel, ~300-400 m apart,
+so "Av. Sur con Av. Portales" is a corridor, not a corner. The sector is the band from Av. Portales
+(north) to Nueva San Martín (south), from the west end of Av. Sur to El Carmen, where the corner
+of Av. Sur with El Carmen (Empanadas con Amor) sits. Inside the band the distance is 0.
+Polylines come from geocoded addresses on each avenue (Google Maps listings).
 """
 
 import math
 
 # west -> east, (lat, lng)
-AV_PORTALES = [(-33.5201, -70.7962), (-33.5182, -70.7789), (-33.5167, -70.7593)]
-AV_SUR = [(-33.5224, -70.7966), (-33.5216, -70.7787), (-33.5206, -70.7624)]
+AV_PORTALES = [(-33.5198, -70.7953), (-33.5192, -70.7901), (-33.5185, -70.7856), (-33.5184, -70.7794),
+               (-33.5179, -70.7767), (-33.5179, -70.7663), (-33.5175, -70.7645), (-33.5172, -70.7631),
+               (-33.5160, -70.7595)]
+AV_SUR = [(-33.5224, -70.7966), (-33.5218, -70.7871), (-33.5216, -70.7806), (-33.5217, -70.7748),
+          (-33.5215, -70.7695), (-33.5209, -70.7616)]
+NUEVA_SAN_MARTIN = [(-33.5250, -70.7978), (-33.5250, -70.7921), (-33.5246, -70.7883), (-33.5249, -70.7822),
+                    (-33.5247, -70.7750), (-33.5245, -70.7729), (-33.5251, -70.7656), (-33.5255, -70.7637),
+                    (-33.5258, -70.7595)]
 
-# heart of the corridor: midpoint between both avenues at Av. 3 Poniente
-CENTER = (-33.5199, -70.7788)
+NORTH, SOUTH = AV_PORTALES, NUEVA_SAN_MARTIN
+
+# heart of the sector: Av. Sur with Av. 3 Poniente, halfway between Portales and Nueva San Martín
+CENTER = (-33.5215, -70.7788)
+CARMEN_CORNER = (-33.5210, -70.7640)  # Av. Sur con El Carmen
 
 KM_PER_DEG_LAT = 111.32
 KM_PER_DEG_LNG = 111.32 * math.cos(math.radians(33.52))
@@ -43,12 +54,16 @@ def _interp_lat(line, lng):
 
 
 def band_distance_km(lat: float, lng: float) -> float:
-    """0 inside the band between both avenues, else distance to the nearest avenue (km)."""
-    north, south = _interp_lat(AV_PORTALES, lng), _interp_lat(AV_SUR, lng)
+    """0 inside the band Av. Portales - Nueva San Martín, else distance to its edge (km)."""
+    north, south = _interp_lat(NORTH, lng), _interp_lat(SOUTH, lng)
     if north is not None and south is not None and south <= lat <= north:
         return 0.0
     p = _xy(lat, lng)
-    return min(_poly_dist(p, AV_PORTALES), _poly_dist(p, AV_SUR))
+    edges = [_poly_dist(p, NORTH), _poly_dist(p, SOUTH)]
+    # beyond the west/east ends, the closing sides of the band count as edges too
+    for i in (0, -1):
+        edges.append(_seg_dist(p, _xy(*NORTH[i]), _xy(*SOUTH[i])))
+    return min(edges)
 
 
 def center_distance_km(lat: float, lng: float) -> float:
@@ -56,15 +71,14 @@ def center_distance_km(lat: float, lng: float) -> float:
     return math.hypot(x, y)
 
 
-# search centers along the corridor, then the neighbouring villas north and south
+# search centers inside the sector, then the neighbouring villas
 SEARCH_POINTS = {
-    "centro": CENTER,
+    "centro": (-33.5199, -70.7788),
     "oeste": (-33.5212, -70.7905),
     "este": (-33.5190, -70.7665),
+    "carmen": (-33.5222, -70.7650),
+    "nsm_centro": (-33.5240, -70.7790),
+    "nsm_oeste": (-33.5240, -70.7910),
     "norte": (-33.5125, -70.7790),
-    "sur": (-33.5280, -70.7790),
-    "noroeste": (-33.5140, -70.7930),
-    "noreste": (-33.5115, -70.7650),
-    "suroeste": (-33.5290, -70.7930),
-    "sureste": (-33.5275, -70.7650),
+    "sur": (-33.5300, -70.7790),
 }

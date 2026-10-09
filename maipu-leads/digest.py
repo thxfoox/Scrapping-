@@ -71,9 +71,11 @@ def main():
     if args.count:
         print(f"{len(cands)} candidates, {len(todo)} without analysis")
         return
-    for p in todo[: args.size]:
+    batch = todo[: args.size]
+    (DATA / "current_batch.txt").write_text("\n".join(p["key"] for p in batch))
+    for i, p in enumerate(batch, 1):
         p["photo_note"] = photo_notes.get(p["key"], "")
-        print(digest(p))
+        print(f"[{i}] " + digest(p))
         print()
 
 

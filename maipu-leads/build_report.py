@@ -12,6 +12,7 @@ from datetime import date
 from pathlib import Path
 
 import config
+import geo
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -130,9 +131,9 @@ def proximity_points(km: float) -> int:
 
 def dist_label(km: float) -> str:
     if km <= 0:
-        return "dentro de la franja Av. Portales–Av. Sur"
+        return "dentro del sector (Av. Portales a Nueva San Martín)"
     txt = f"{round(km * 1000 / 10) * 10} m" if km < 1 else f"{str(round(km, 1)).replace('.', ',')} km"
-    return f"a {txt} de la franja Av. Portales–Av. Sur"
+    return f"a {txt} del sector Av. Portales–Nueva San Martín"
 
 
 ATIENDE_LABELS = {
@@ -206,6 +207,9 @@ def candidates(places: list[dict]) -> tuple[list[dict], dict]:
     out, reasons = [], {}
     seen = set()
     for p in places:
+        if p.get("lat") is not None:  # distances always follow the current sector geometry
+            p["dist_km"] = round(geo.band_distance_km(p["lat"], p["lng"]), 3)
+            p["dist_center_km"] = round(geo.center_distance_km(p["lat"], p["lng"]), 3)
         why = None
         status = norm(p.get("open_status", ""))
         rubro = map_rubro(p.get("category", ""), p.get("rubros_busqueda", []))
@@ -247,7 +251,7 @@ def build():
     places = load_places()
     analysis = load_analysis()
     cands, reasons = candidates(places)
-    center = {"label": "la franja entre Av. Portales y Av. Sur (centro en Av. 3 Poniente)"}
+    center = {"label": "el sector entre Av. Portales y Nueva San Martín, de Av. El Conquistador a El Carmen"}
     searches = json.loads((DATA / "searches_done.json").read_text()) if (DATA / "searches_done.json").exists() else []
 
     leads, missing = [], []
@@ -310,22 +314,24 @@ def render(leads, reasons, places, center, searches):
         "fichas_revisadas": len(places),
         "rubros_buscados": len(config.RUBROS),
         "tiers": TIERS,
-        "lede": (f"{len(leads)} negocios seleccionados entre {len(places)} fichas de Google Maps revisadas en Maipú, "
-                 "ordenados según lo interesante que es contactarlos. Cada ficha trae su contacto, lo que dicen sus "
-                 "clientes y quién atiende, para llegar preparado a la llamada o a la visita."),
+        "lede": (f"{len(leads)} negocios seleccionados entre {len(places)} fichas de Google Maps revisadas en el sector de "
+                 "Av. Portales, Av. Sur y Nueva San Martín, hasta la esquina de Av. Sur con El Carmen (Maipú), ordenados "
+                 "según lo interesante que es contactarlos. Cada ficha trae su contacto, lo que dicen sus clientes y quién "
+                 "atiende, para llegar preparado a la llamada o a la visita."),
         "weights": [
             {"label": "Teléfono o WhatsApp", "max": 40},
             {"label": "Negocio local y quién atiende", "max": 27},
             {"label": "Valoración y número de reseñas", "max": 25},
-            {"label": "Cercanía a la franja Av. Portales–Av. Sur", "max": 8},
+            {"label": "Cercanía al sector Portales–Sur–Nueva San Martín", "max": 8},
         ],
         "method_note": ("Cadenas, franquicias y locales de mall restan entre 12 y 18 puntos. Sin teléfono solo entran "
                         "si tienen Instagram o email, y con menos nota. Tener web no cambia la nota: en empates va "
                         f"primero el que no tiene. Prioridad alta desde {TIERS['alta']} puntos; media desde {TIERS['media']}."),
         "methodology": (f"Datos de Google Maps extraídos con Scrapling (navegador automatizado) el {fecha}: "
                         f"{len(searches)} búsquedas de {len(config.RUBROS)} rubros en {center['label']} y las villas vecinas. "
-                        "Av. Portales y Av. Sur son paralelas (a unos 300-400 m), así que la zona objetivo es la franja entre "
-                        f"ambas: {inside} negocios están dentro y el resto a menos de {str(round(radius, 1)).replace('.', ',')} km, siempre en Maipú. "
+                        "Av. Portales, Av. Sur y Nueva San Martín son paralelas, así que la zona objetivo es la franja entre "
+                        "Av. Portales y Nueva San Martín, incluida la esquina de Av. Sur con El Carmen: "
+                        f"{inside} negocios están dentro y el resto a menos de {str(round(radius, 1)).replace('.', ',')} km, siempre en Maipú. "
                         f"Se abrieron {len(places)} fichas y se leyeron {reviews_read:,} reseñas".replace(",", ".") +
                         ". El resumen, los elogios, los reclamos y quién atiende los redactó una IA leyendo cada ficha, "
                         "sus reseñas, las respuestas del dueño y su foto principal."),

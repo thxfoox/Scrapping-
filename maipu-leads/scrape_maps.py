@@ -368,6 +368,17 @@ async def details(limit: int, radius: float, review_scrolls: int, workers: int):
         log("STOPPED: Google is rate limiting this session")
 
 
+def reindex():
+    """Recompute distances in the index after the sector geometry changes."""
+    index = load_json(DATA / "places_index.json", {})
+    for entry in index.values():
+        if entry.get("lat") is not None:
+            entry.update(distances(entry["lat"], entry["lng"]))
+    save_json(DATA / "places_index.json", index)
+    for limit in (0, 0.25, 0.5, 0.8):
+        log(f"within {limit} km of the sector: {sum(1 for e in index.values() if e.get('dist_km', 99) <= limit)}")
+
+
 # ------------------------------------------------------------------ probe
 
 
@@ -395,6 +406,7 @@ def main():
     dp.add_argument("--radius", type=float, default=0.8)
     dp.add_argument("--review-scrolls", type=int, default=2)
     dp.add_argument("--workers", type=int, default=3)
+    sub.add_parser("reindex")
     pp = sub.add_parser("probe")
     pp.add_argument("url")
     pp.add_argument("--out", default="/tmp/probe.html")
@@ -406,6 +418,8 @@ def main():
         asyncio.run(search([p.strip() for p in args.points.split(",")], rubros, args.workers))
     elif args.cmd == "details":
         asyncio.run(details(args.limit, args.radius, args.review_scrolls, args.workers))
+    elif args.cmd == "reindex":
+        reindex()
     elif args.cmd == "probe":
         asyncio.run(probe(args.url, args.out, args.place))
 
