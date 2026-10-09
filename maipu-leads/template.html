@@ -424,6 +424,49 @@ details.more[open] summary::after { transform: rotate(-135deg); }
 .empty h3 { font-family: var(--font-display); color: var(--ink); font-size: 22px; margin: 0 0 6px; }
 .link-btn { border: 0; background: none; color: var(--green-ink); font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }
 
+/* ---------- pitch ---------- */
+.pitch { display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid color-mix(in srgb, var(--green) 35%, var(--line)); background: color-mix(in srgb, var(--surface) 94%, var(--green) 6%); }
+.pitch-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: 13.5px; }
+.pitch-head > b { color: var(--ink); font-weight: 600; margin-right: 2px; }
+.svc { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid var(--line-strong); color: var(--ink-2); background: var(--surface); }
+.svc-main { background: var(--green-ink); border-color: var(--green-ink); color: var(--surface); }
+.pitch-why { margin: 0; font-size: 13px; color: var(--muted); }
+.pitch details.more { border-top-color: color-mix(in srgb, var(--green) 25%, var(--line)); }
+.ptabs { display: flex; gap: 4px; margin: 8px 0 10px; padding: 3px; border-radius: 12px; background: var(--surface-3); width: fit-content; max-width: 100%; }
+.ptab { border: 0; background: transparent; color: var(--ink-2); font: 600 13px/1 var(--font-sans); height: 32px; padding: 0 12px; border-radius: 9px; cursor: pointer; transition: background .2s ease, color .2s ease; }
+.ptab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+.script { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 14px; line-height: 1.55; color: var(--ink); }
+.script li { padding-left: 12px; border-left: 2px solid var(--line-strong); }
+.script li.note { color: var(--muted); font-size: 13px; border-left-color: transparent; padding-left: 0; }
+.script .fill { background: var(--amber-soft); color: var(--amber-ink); border-radius: 4px; padding: 0 3px; }
+.pitch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.copy-note { font-size: 12px; color: var(--muted); }
+.copy-note.ok { color: var(--green-ink); }
+.btn-sm { min-height: 36px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+.btn-sm svg { width: 16px; height: 16px; }
+
+/* ---------- guide ---------- */
+.guide { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 18px; }
+@media (max-width: 960px) { .guide { grid-template-columns: 1fr; } }
+.me-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 20px; }
+@media (max-width: 480px) { .me-fields { grid-template-columns: 1fr; } }
+.field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.field input { height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; outline: none; min-width: 0; transition: border-color .2s ease, box-shadow .2s ease; }
+.field input:focus { border-color: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: step; }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; font-size: 14px; color: var(--ink-2); line-height: 1.5; }
+.steps li::before { counter-increment: step; content: counter(step); width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--green-soft); color: var(--green-ink); font-weight: 700; font-size: 13px; }
+.steps b { color: var(--ink); }
+.objections { display: grid; gap: 8px; }
+.objections details { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); padding: 0 14px; transition: background-color .2s ease; }
+.objections details[open] { background: var(--surface); }
+.objections summary { cursor: pointer; list-style: none; padding: 12px 0; font-weight: 600; font-size: 14px; color: var(--ink); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.objections summary::-webkit-details-marker { display: none; }
+.objections summary::after { content: "+"; color: var(--muted); font-weight: 400; font-size: 20px; line-height: 1; }
+.objections details[open] summary::after { content: "−"; }
+.objections p { margin: 0 0 12px; font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+.guide-note { font-size: 13px; color: var(--muted); margin: 16px 0 0; }
+
 /* ---------- footer ---------- */
 footer.site { margin-top: 36px; border-top: 1px solid var(--line); padding: 32px 0 48px; color: var(--muted); font-size: 13.5px; }
 .foot-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 24px; }
@@ -476,6 +519,7 @@ footer.site p { margin: 0 0 8px; }
     <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
     <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
     <symbol id="i-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
     <symbol id="i-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5M12 3v12"/></symbol>
   </defs>
 </svg>
@@ -532,6 +576,46 @@ footer.site p { margin: 0 0 8px; }
     </div>
   </section>
 
+  <section class="wrap" aria-labelledby="guideTitle" id="guia">
+    <div class="section-head">
+      <div>
+        <h2 id="guideTitle">Cómo ofrecer tus servicios</h2>
+        <p>Cada tarjeta dice qué ofrecerle primero y trae qué decirle por teléfono, por WhatsApp o en el local. Escribe tu nombre y queda puesto en todos los guiones.</p>
+      </div>
+    </div>
+    <div class="guide">
+      <div class="panel panel-pad">
+        <h3>Tus datos para los guiones</h3>
+        <p class="sub">Se guardan en este navegador.</p>
+        <div class="me-fields">
+          <label class="field">Tu nombre<input id="meName" type="text" autocomplete="given-name" placeholder="Ej.: Camila"></label>
+          <label class="field">Tu marca o agencia (opcional)<input id="meBrand" type="text" autocomplete="organization" placeholder="Ej.: Barrio Digital"></label>
+        </div>
+        <h3 style="font-size:17px;margin-bottom:12px">La llamada en cuatro pasos</h3>
+        <ol class="steps">
+          <li><span><b>Pregunta por la persona correcta.</b> La tarjeta dice con quién hablar; si contesta un empleado, pregunta a qué hora está el dueño.</span></li>
+          <li><span><b>Muestra que conoces su negocio.</b> Parte con lo que elogian sus clientes: abre la conversación mejor que cualquier oferta.</span></li>
+          <li><span><b>Nombra lo que le falta.</b> Ficha sin reclamar, pocas reseñas, sin web o sin redes: algo concreto que ve cualquiera que lo busca.</span></li>
+          <li><span><b>Pide algo pequeño.</b> Diez minutos para mostrarle un ejemplo, o mandárselo por WhatsApp. El precio, mejor en persona.</span></li>
+        </ol>
+        <p class="guide-note">Lo que le falta sale de su ficha de Google: puede que tenga Instagram o web y no los haya enlazado. Si es así, ofrécele enlazarlos y darles movimiento.</p>
+      </div>
+      <div class="panel panel-pad">
+        <h3>Si te dicen…</h3>
+        <p class="sub">Respuestas cortas para las objeciones más comunes.</p>
+        <div class="objections">
+          <details><summary>«No tengo tiempo para eso»</summary><p>«Justamente por eso lo hacemos nosotros. Usted solo nos manda unas fotos por WhatsApp y nosotros dejamos todo listo; le toma muy poco tiempo.»</p></details>
+          <details><summary>«Ya me llegan clientes igual»</summary><p>«Y se nota: sus clientes lo recomiendan. La idea es que quienes todavía no lo conocen y buscan en Google algo cerca lo encuentren a usted y no a otro local de la cuadra.»</p></details>
+          <details><summary>«Debe ser caro»</summary><p>«Podemos partir por lo más simple: dejar bien armada su ficha de Google. Es lo más económico y lo primero que ve quien lo busca. Si le sirve, seguimos con lo demás.»</p></details>
+          <details><summary>«Mi sobrino (o mi hijo) me ve las redes»</summary><p>«Perfecto, podemos trabajar con él. Nosotros dejamos la ficha y la página listas, y él sigue subiendo fotos; así no parte de cero.»</p></details>
+          <details><summary>«Ya estoy en PedidosYa o Uber Eats»</summary><p>«Las apps cobran comisión por cada pedido. Con su carta en internet y un botón de WhatsApp, sus clientes de siempre le piden directo y esa comisión queda para usted.»</p></details>
+          <details><summary>«Ya tengo Instagram»</summary><p>«Qué bueno. No aparece en su ficha de Google, así que quien lo encuentra en Maps no llega a él. Lo enlazamos y le ayudamos a publicar seguido.»</p></details>
+          <details><summary>«Mándeme la información»</summary><p>«Claro, se la mando ahora por WhatsApp con un ejemplo de cómo quedaría lo suyo. ¿Le parece si el jueves lo conversamos cinco minutos?»</p></details>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="wrap" aria-labelledby="listTitle" id="listado">
     <div class="section-head">
       <div>
@@ -552,6 +636,13 @@ footer.site p { margin: 0 0 8px; }
           <option value="rating">Mejor valoración</option>
           <option value="reviews">Más reseñas</option>
           <option value="name">Nombre (A–Z)</option>
+        </select>
+        <label class="sr-only" for="svc">Qué ofrecer</label>
+        <select class="select" id="svc">
+          <option value="all">Ofrecer: cualquier servicio</option>
+          <option value="google">Ofrecer: Google Maps</option>
+          <option value="redes">Ofrecer: redes sociales</option>
+          <option value="web">Ofrecer: página web</option>
         </select>
         <label class="toggle"><input type="checkbox" id="onlyWa"><span class="knob"></span>Con WhatsApp</label>
         <label class="toggle"><input type="checkbox" id="hideDone"><span class="knob"></span>Ocultar contactados</label>
@@ -616,7 +707,7 @@ footer.site p { margin: 0 0 8px; }
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
   }
   let crm = readJSON(STORE_KEY, {});
-  const prefs = Object.assign({ rubro: "Todos", sort: "score", onlyWa: false, hideDone: false, q: "" }, readJSON(PREF_KEY, {}));
+  const prefs = Object.assign({ rubro: "Todos", sort: "score", onlyWa: false, hideDone: false, q: "", svc: "all", me: "", brand: "", tab: "call" }, readJSON(PREF_KEY, {}));
   const savePrefs = () => writeJSON(PREF_KEY, prefs);
   const crmGet = (id) => crm[id] || {};
   function crmSet(id, patch) {
@@ -643,7 +734,7 @@ footer.site p { margin: 0 0 8px; }
   const todayName = norm(DAYS[new Date().getDay()]);
   const tierOf = (s) => s >= META.tiers.alta ? "alta" : s >= META.tiers.media ? "media" : "baja";
   const tierLabel = { alta: "Prioridad alta", media: "Prioridad media", baja: "Prioridad baja" };
-  const searchText = new Map(LEADS.map((l) => [l.id, norm([l.name, l.address, l.category, l.rubro, l.resumen, l.elogios, l.reclamos, l.atiende].join(" "))]));
+  const searchText = new Map(LEADS.map((l) => [l.id, norm([l.name, l.address, l.category, l.rubro, l.resumen, l.elogios, l.reclamos, l.atiende, ...(l.offer?.chips || [])].join(" "))]));
 
   // ---------- hero ----------
   $("#lede").textContent = META.lede;
@@ -742,7 +833,7 @@ footer.site p { margin: 0 0 8px; }
     const a = e.target.closest("a[data-jump]");
     if (!a) return;
     e.preventDefault();
-    prefs.rubro = "Todos"; prefs.q = ""; prefs.onlyWa = false; prefs.hideDone = false; $("#q").value = "";
+    prefs.rubro = "Todos"; prefs.q = ""; prefs.onlyWa = false; prefs.hideDone = false; prefs.svc = "all"; $("#q").value = ""; $("#svc").value = "all";
     syncControls(); render();
     const card = document.getElementById("lead-" + a.dataset.jump);
     if (card) {
@@ -764,12 +855,14 @@ footer.site p { margin: 0 0 8px; }
       default: return (a, b) => b.score - a.score || noWebFirst(a, b) || a.dist_km - b.dist_km || a.dist_center_km - b.dist_center_km;
     }
   }
+  const offers = (l) => prefs.svc === "all" || (l.offer?.services || []).includes(prefs.svc);
   function visible() {
     const q = norm(prefs.q.trim());
     return LEADS.filter((l) => {
       if (prefs.rubro !== "Todos" && l.rubro !== prefs.rubro) return false;
       if (prefs.onlyWa && !l.whatsapp) return false;
       if (prefs.hideDone && crmGet(l.id).contacted) return false;
+      if (!offers(l)) return false;
       if (q && !q.split(/\s+/).every((t) => searchText.get(l.id).includes(t))) return false;
       return true;
     }).sort(compare(prefs.sort));
@@ -777,12 +870,104 @@ footer.site p { margin: 0 0 8px; }
 
   // ---------- chips ----------
   function renderChips() {
-    const base = LEADS.filter((l) => (!prefs.onlyWa || l.whatsapp) && (!prefs.hideDone || !crmGet(l.id).contacted));
+    const base = LEADS.filter((l) => (!prefs.onlyWa || l.whatsapp) && (!prefs.hideDone || !crmGet(l.id).contacted) && offers(l));
     const list = [{ rubro: "Todos", n: base.length }, ...counts.map((c) => ({ rubro: c.rubro, n: base.filter((l) => l.rubro === c.rubro).length }))];
     $("#chips").innerHTML = list.map((c) => `<button type="button" class="chip-btn" data-rubro="${esc(c.rubro)}" aria-pressed="${prefs.rubro === c.rubro}">${esc(c.rubro)} <span class="n">${c.n}</span></button>`).join("");
   }
   $("#chips").addEventListener("click", (e) => { const b = e.target.closest(".chip-btn"); if (b) setRubro(b.dataset.rubro); });
   function setRubro(r) { prefs.rubro = r; savePrefs(); render(); }
+
+  // ---------- pitch ----------
+  const SVC = { google: "Google Maps", redes: "Redes sociales", web: "Página web" };
+  const EXAMPLE = {
+    google: "una ficha de Google bien armada de otro local: fotos, horario al día y reseñas respondidas",
+    redes: "un Instagram con buenas fotos de un negocio parecido",
+    web: "una página simple de otro negocio, con carta o servicios y botón de WhatsApp",
+  };
+  const ROLE = { owner: "el dueño o la dueña", family: "el dueño o la dueña", staff: "el dueño o el encargado", chain: "el administrador del local", unknown: "el dueño o la dueña" };
+  const toRole = (r) => r.replace(/^el /, "al ").replace(/ o el /, " o al ").replace(/ o la /, " o a la ");
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? "Hola, buenos días" : h < 20 ? "Hola, buenas tardes" : "Hola, buenas noches"; };
+  function parts(l) {
+    const p = l.pitch || {}, o = l.offer || { why: [], main: "redes" };
+    const me = (prefs.me || "").trim() || "[tu nombre]", brand = (prefs.brand || "").trim();
+    return {
+      who: p.nombre || "", role: ROLE[l.atiende_tipo] || ROLE.unknown, hook: p.gancho || "", angle: p.angulo || "",
+      soy: `Soy ${me}${brand ? `, de ${brand},` : ""} y ayudo a negocios de Maipú con su ficha de Google, sus redes sociales y su página web.`,
+      soyVisit: `Soy ${me}${brand ? `, de ${brand},` : ""} y trabajo con negocios del barrio.`,
+      why: o.why.length ? `porque vi que ${o.why[0]}${o.why[1] ? ` y que ${o.why[1]}` : ""}.` : "porque ya tiene buena presencia en internet y le podemos ahorrar el trabajo de mantenerla al día.",
+      example: EXAMPLE[o.main] || EXAMPLE.redes,
+    };
+  }
+  function waText(l, x = parts(l)) {
+    return [`Hola${x.who ? " " + x.who : ""}, ¿cómo está? ${x.soy}`,
+      [x.hook, `Le escribo ${x.why}`].filter(Boolean).join(" "),
+      [x.angle, `¿Le puedo mandar un ejemplo de cómo quedaría para ${l.name}?`].filter(Boolean).join(" ")].join("\n\n");
+  }
+  const say = (t) => ({ t }), note = (t) => ({ t, note: true });
+  function scripts(l) {
+    const x = parts(l);
+    return {
+      call: [say(`${greeting()}. ${x.who ? `¿Hablo con ${x.who}?` : `¿Me podría comunicar con ${x.role}?`}`), say(x.soy), x.hook && say(x.hook),
+        say(`Le llamo ${x.why}`), x.angle && say(x.angle),
+        say("¿Le parece si paso esta semana y en diez minutos le muestro un ejemplo? Si prefiere, se lo mando por WhatsApp."),
+        note(`Si contesta otra persona: «¿A qué hora puedo encontrar ${x.who ? "a " + x.who : toRole(x.role)}?»`)].filter(Boolean),
+      wa: waText(l, x).split("\n\n").map(say),
+      visit: [note(`Pregunta por ${x.who || x.role}.`),
+        say(`${greeting()}. ${x.soyVisit} ${x.hook} ${x.angle} ¿Tiene cinco minutos para que le muestre un ejemplo en el celular?`.replace(/\s+/g, " ")),
+        note(`Lleva en el celular ${x.example}.`)],
+    };
+  }
+  function waHref(l) {
+    if (!l.whatsapp) return "";
+    if (!/^https:\/\/(wa\.me|api\.whatsapp\.com)\//.test(l.whatsapp)) return l.whatsapp;
+    const base = l.whatsapp.replace(/[?&]text=[^&]*/, "");
+    return `${base}${base.includes("?") ? "&" : "?"}text=${encodeURIComponent(waText(l))}`;
+  }
+  const marks = (s) => s.replaceAll("[tu nombre]", '<span class="fill">[tu nombre]</span>');
+  function pitchBody(l) {
+    const s = scripts(l), tab = prefs.tab;
+    const li = (x) => `<li class="${x.note ? "note" : ""}">${marks(esc(x.t))}</li>`;
+    const tabs = [["call", "Llamada"], ["wa", l.whatsapp ? "WhatsApp" : "Mensaje"], ["visit", "Visita"]];
+    const noWa = l.whatsapp ? "" : `<p class="pitch-why">${l.socials?.instagram ? "No tiene WhatsApp: mándalo por Instagram." : "No tiene WhatsApp: úsalo de guía para la llamada."}</p>`;
+    const open = l.whatsapp ? `<a class="btn btn-sm btn-wa" href="${esc(waHref(l))}" target="_blank" rel="noopener noreferrer">${icon("wa")}Abrir WhatsApp con este mensaje</a>`
+      : l.socials?.instagram ? `<a class="btn btn-sm" href="${esc(l.socials.instagram)}" target="_blank" rel="noopener noreferrer">${icon("ig")}Abrir Instagram</a>` : "";
+    return `<div class="ptabs" role="tablist" aria-label="Canal">${tabs.map(([k, t]) => `<button type="button" class="ptab" role="tab" data-tab="${k}" aria-selected="${tab === k}">${t}</button>`).join("")}</div>
+      <div class="ppanel" data-panel="call"${tab === "call" ? "" : " hidden"}><ol class="script">${s.call.map(li).join("")}</ol></div>
+      <div class="ppanel" data-panel="wa"${tab === "wa" ? "" : " hidden"}><ol class="script">${s.wa.map(li).join("")}</ol>${noWa}</div>
+      <div class="ppanel" data-panel="visit"${tab === "visit" ? "" : " hidden"}><ol class="script">${s.visit.map(li).join("")}</ol></div>
+      <div class="pitch-actions"><button type="button" class="btn btn-sm js-copy">${icon("copy")}Copiar</button>${open}<span class="copy-note js-copied" aria-live="polite"></span></div>`;
+  }
+  function pitchHTML(l) {
+    const o = l.offer;
+    if (!o) return "";
+    const svcs = o.services.map((s, i) => `<span class="svc${i === 0 ? " svc-main" : ""}">${SVC[s]}</span>`).join("");
+    return `<section class="pitch" aria-label="Qué ofrecerle">
+        <div class="pitch-head"><b>Ofrécele</b>${svcs}</div>
+        ${o.chips.length ? `<p class="pitch-why">${o.chips.map(esc).join(" · ")}</p>` : ""}
+        <details class="more"><summary>Qué decirle</summary><div class="pitch-body">${pitchBody(l)}</div></details>
+      </section>`;
+  }
+  function refreshPitches() {
+    document.querySelectorAll("#cards .card").forEach((card) => {
+      const l = byId.get(card.dataset.id);
+      if (!l) return;
+      const body = card.querySelector(".pitch-body");
+      if (body) body.innerHTML = pitchBody(l);
+      const wa = card.querySelector(".actions .btn-wa");
+      if (wa) wa.href = waHref(l);
+    });
+  }
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch {
+      const ta = Object.assign(document.createElement("textarea"), { value: t });
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta); ta.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch {}
+      ta.remove();
+      return ok;
+    }
+  }
 
   // ---------- cards ----------
   const RING = 2 * Math.PI * 24;
@@ -846,11 +1031,12 @@ footer.site p { margin: 0 0 8px; }
         <div class="con"><dt aria-label="Lo que reclaman">−</dt><dd><b>Reclaman:</b> ${esc(l.reclamos)}</dd></div>
       </dl>
       <p class="who"><b>Con quién hablarás:</b> ${esc(l.atiende_detalle)}${l.tip ? `<span class="tip"><b>Para la llamada:</b> ${esc(l.tip)}</span>` : ""}</p>
+      ${pitchHTML(l)}
       ${hoursBlock(l)}
       <details class="more"><summary>¿Por qué ${l.score} puntos?</summary><ul class="why-list">${why}</ul></details>
       <div class="actions">
         <a class="btn btn-maps" href="${esc(l.maps_url)}" target="_blank" rel="noopener noreferrer">${icon("map")}Ver en Maps</a>
-        ${l.whatsapp ? `<a class="btn btn-wa" href="${esc(l.whatsapp)}" target="_blank" rel="noopener noreferrer">${icon("wa")}WhatsApp</a>` : ""}
+        ${l.whatsapp ? `<a class="btn btn-wa" href="${esc(waHref(l))}" target="_blank" rel="noopener noreferrer">${icon("wa")}WhatsApp</a>` : ""}
         ${l.phone ? `<a class="btn" href="tel:${esc(l.phone_e164)}">${icon("phone")}Llamar</a>` : ""}
         ${!l.phone && l.socials?.instagram ? `<a class="btn" href="${esc(l.socials.instagram)}" target="_blank" rel="noopener noreferrer">${icon("ig")}Instagram</a>` : ""}
       </div>
@@ -876,7 +1062,7 @@ footer.site p { margin: 0 0 8px; }
     const cards = $("#cards");
     if (!list.length) {
       cards.innerHTML = `<div class="empty"><h3>No hay negocios con estos filtros</h3><p>Prueba con otro rubro o <button type="button" class="link-btn" id="resetFilters">limpia los filtros</button>.</p></div>`;
-      $("#resetFilters").addEventListener("click", () => { Object.assign(prefs, { rubro: "Todos", q: "", onlyWa: false, hideDone: false }); $("#q").value = ""; syncControls(); savePrefs(); render(); });
+      $("#resetFilters").addEventListener("click", () => { Object.assign(prefs, { rubro: "Todos", q: "", onlyWa: false, hideDone: false, svc: "all" }); $("#q").value = ""; syncControls(); savePrefs(); render(); });
     } else {
       cards.innerHTML = list.map(cardHTML).join("");
     }
@@ -923,6 +1109,26 @@ footer.site p { margin: 0 0 8px; }
     clearTimeout(timers.get(id));
     timers.set(id, setTimeout(() => flashSaved(card, crmSet(id, { notes: value })), 450));
   });
+  $("#cards").addEventListener("click", async (e) => {
+    const tab = e.target.closest(".ptab");
+    if (tab) {
+      prefs.tab = tab.dataset.tab; savePrefs();
+      const body = tab.closest(".pitch-body");
+      body.querySelectorAll(".ptab").forEach((b) => b.setAttribute("aria-selected", String(b === tab)));
+      body.querySelectorAll(".ppanel").forEach((p) => { p.hidden = p.dataset.panel !== prefs.tab; });
+      return;
+    }
+    const copy = e.target.closest(".js-copy");
+    if (!copy) return;
+    const card = copy.closest(".card"), l = byId.get(card.dataset.id);
+    const panel = card.querySelector(".ppanel:not([hidden])")?.dataset.panel || "call";
+    const text = panel === "wa" ? waText(l) : scripts(l)[panel].map((x) => x.t).join("\n");
+    const ok = await copyText(text);
+    const label = card.querySelector(".js-copied");
+    label.textContent = ok ? "Copiado" : "No se pudo copiar: selecciona el texto a mano.";
+    label.classList.toggle("ok", ok);
+    setTimeout(() => { label.textContent = ""; }, 2500);
+  });
   function flashSaved(card, ok) {
     const label = card.querySelector(".saved");
     const t = new Date().toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
@@ -938,12 +1144,19 @@ footer.site p { margin: 0 0 8px; }
   });
   function syncControls() {
     $("#sort").value = prefs.sort; $("#onlyWa").checked = prefs.onlyWa; $("#hideDone").checked = prefs.hideDone; $("#q").value = prefs.q;
+    $("#svc").value = prefs.svc; $("#meName").value = prefs.me; $("#meBrand").value = prefs.brand;
   }
   let qTimer;
   $("#q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTimeout(() => { prefs.q = e.target.value; savePrefs(); render(); }, 160); });
   $("#sort").addEventListener("change", (e) => { prefs.sort = e.target.value; savePrefs(); render(); });
   $("#onlyWa").addEventListener("change", (e) => { prefs.onlyWa = e.target.checked; savePrefs(); render(); });
   $("#hideDone").addEventListener("change", (e) => { prefs.hideDone = e.target.checked; savePrefs(); render(); });
+  $("#svc").addEventListener("change", (e) => { prefs.svc = e.target.value; savePrefs(); render(); });
+  let meTimer;
+  [["#meName", "me"], ["#meBrand", "brand"]].forEach(([sel, key]) => $(sel).addEventListener("input", (e) => {
+    prefs[key] = e.target.value; savePrefs();
+    clearTimeout(meTimer); meTimer = setTimeout(refreshPitches, 250);
+  }));
 
   // ---------- backup / export ----------
   function download(name, text, type) {
@@ -982,11 +1195,11 @@ footer.site p { margin: 0 0 8px; }
     e.target.value = "";
   });
   $("#csvBtn").addEventListener("click", () => {
-    const cols = ["Puntuación", "Nombre", "Rubro", "Teléfono", "WhatsApp", "Dirección", "Distancia (km)", "Valoración", "Reseñas", "Web", "Instagram", "Facebook", "Atiende", "Resumen", "Elogian", "Reclaman", "Maps", "Contactado", "Fecha contacto", "Notas"];
+    const cols = ["Puntuación", "Nombre", "Rubro", "Teléfono", "WhatsApp", "Dirección", "Distancia (km)", "Valoración", "Reseñas", "Web", "Instagram", "Facebook", "Atiende", "Resumen", "Elogian", "Reclaman", "Ofrecer primero", "También", "Le falta", "Mensaje WhatsApp", "Maps", "Contactado", "Fecha contacto", "Notas"];
     const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const rows = [...LEADS].sort(compare("score")).map((l) => {
       const st = crmGet(l.id);
-      return [l.score, l.name, l.rubro, l.phone, l.whatsapp ? "sí" : "no", l.address, l.dist_km, l.rating ?? "", l.reviews ?? "", l.website, l.socials?.instagram, l.socials?.facebook, l.atiende, l.resumen, l.elogios, l.reclamos, l.maps_url, st.contacted ? "sí" : "no", st.contactedAt ? st.contactedAt.slice(0, 10) : "", st.notes].map(q).join(";");
+      return [l.score, l.name, l.rubro, l.phone, l.whatsapp ? "sí" : "no", l.address, l.dist_km, l.rating ?? "", l.reviews ?? "", l.website, l.socials?.instagram, l.socials?.facebook, l.atiende, l.resumen, l.elogios, l.reclamos, SVC[l.offer?.main] || "", (l.offer?.services || []).slice(1).map((x) => SVC[x]).join(", "), (l.offer?.chips || []).join(" · "), waText(l), l.maps_url, st.contacted ? "sí" : "no", st.contactedAt ? st.contactedAt.slice(0, 10) : "", st.notes].map(q).join(";");
     });
     download(`leads-maipu-${stamp()}.csv`, "﻿" + [cols.map(q).join(";"), ...rows].join("\r\n"), "text/csv;charset=utf-8");
   });

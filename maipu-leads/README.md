@@ -26,6 +26,8 @@ python stats.py                                           # avance: fichas, cand
 python digest.py --size 12                                # siguiente tanda sin analizar, en texto compacto
 python photos.py batch                                    # hoja de fotos de esa tanda -> data/sheets/current.jpg
 python save_batch.py tanda.json                           # guarda el análisis de la tanda -> data/analysis/
+python pitch.py digest --size 45                          # siguientes negocios sin frase de entrada para el guion
+python pitch.py save tanda.json                           # guarda esas frases -> data/pitch/
 python build_report.py                                    # puntúa y escribe el informe HTML
 ```
 
@@ -33,4 +35,6 @@ python build_report.py                                    # puntúa y escribe el
 - `geo.py`: el sector (de Av. Portales a Nueva San Martín, hasta El Carmen) y los puntos de búsqueda.
 - `data/analysis/*.json`: análisis escrito por IA para cada ficha (resumen, elogios, reclamos, quién atiende).
 - `build_report.py`: exclusiones, rubro y puntuación; `--candidates` lista lo que falta analizar.
+  También decide qué ofrecerle a cada negocio (ficha de Google, redes o web) según lo que le falta a su ficha.
+- `data/pitch/*.json`: frase de entrada y propuesta escritas por IA para el guion de cada negocio.
 - `template.html`: el dashboard (casillas y notas se guardan en el `localStorage` del navegador).

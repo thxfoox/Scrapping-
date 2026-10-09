@@ -271,9 +271,74 @@ def maps_link(p: dict) -> str:
     return p.get("maps_url", "")
 
 
+def load_pitch() -> dict:
+    merged = {}
+    for f in sorted((DATA / "pitch").glob("*.json")):
+        merged.update(json.loads(f.read_text()))
+    return merged
+
+
+SERVICES = ("google", "redes", "web")  # tie-break order: the quickest win first
+HOURS_COMPLAINT = re.compile(r"horario (de|en) (maps|google)|hora publicada|horario publicado|horario real|no coincide")
+
+
+def offer_for(p: dict, lead: dict, a: dict) -> dict:
+    """What to pitch first, from what the listing is missing (rules only, no AI).
+
+    Each need is (points, phrase that follows "vi que", short chip). Phrases only claim what the
+    Google listing shows: a business may have an Instagram it never linked there."""
+    need = {s: [] for s in SERVICES}
+    n, rating = lead["reviews"] or 0, lead["rating"]
+    items = p.get("review_items") or []
+    if lead["unclaimed"]:
+        need["google"].append((3, "su ficha de Google está sin reclamar", "Ficha sin reclamar"))
+    if n == 0:
+        need["google"].append((2, "su ficha de Google todavía no tiene reseñas", "Sin reseñas"))
+    elif n < 15:
+        plural = "s" if n != 1 else ""
+        need["google"].append((2, f"en Google tiene solo {n} reseña{plural}", f"Solo {n} reseña{plural}"))
+    if rating and rating < 4.2 and n >= 10:
+        r = f"{rating:.1f}".replace(".", ",")
+        need["google"].append((2, f"su nota en Google ({r}) podría estar más arriba", f"Nota {r} en Google"))
+    if any((it.get("stars") or 5) <= 2 for it in items) and not any(it.get("owner_reply") for it in items):
+        need["google"].append((1, "hay reseñas negativas sin respuesta en Google", "Reseñas sin responder"))
+    if HOURS_COMPLAINT.search(norm(a.get("reclamos", ""))):
+        need["google"].append((2, "algunos clientes reclaman que el horario de Google no coincide con el real",
+                               "Horario desactualizado"))
+    elif not lead["hours"] and not lead["hours_hint"]:
+        need["google"].append((1, "su ficha no muestra el horario", "Sin horario en Google"))
+    socials = lead["socials"]
+    has_ig = bool(socials.get("instagram")) or lead["platform"] == "Instagram"
+    has_fb = bool(socials.get("facebook")) or lead["platform"] == "Facebook"
+    if not has_ig and not has_fb:
+        need["redes"].append((3, "no tiene Instagram ni Facebook enlazados a su ficha", "Sin redes"))
+    elif not has_ig:
+        need["redes"].append((2, "tiene Facebook pero no un Instagram enlazado a su ficha", "Sin Instagram"))
+    if not lead["has_web"]:
+        if lead["platform"] and lead["platform"] not in ("Instagram", "Facebook", "WhatsApp"):
+            need["web"].append((2, f"su único enlace es {lead['platform']}, no una página propia",
+                                f"Solo {lead['platform']}"))
+        else:
+            need["web"].append((3, "no aparece una página web propia del local", "Sin web propia"))
+    points = {s: sum(x[0] for x in need[s]) for s in SERVICES}
+    ranked = sorted((s for s in SERVICES if points[s]), key=lambda s: (-points[s], SERVICES.index(s)))
+    for s in ranked:
+        need[s].sort(key=lambda x: -x[0])
+    why = []
+    if ranked:
+        why.append(need[ranked[0]][0][1])
+        if len(ranked) > 1:
+            why.append(need[ranked[1]][0][1])
+        elif len(need[ranked[0]]) > 1:
+            why.append(need[ranked[0]][1][1])
+    chips = [x[2] for x in sorted((x for s in ranked for x in need[s]), key=lambda x: -x[0])][:4]
+    return {"main": ranked[0] if ranked else "redes", "services": ranked or ["redes"], "why": why, "chips": chips}
+
+
 def build():
     places = load_places()
     analysis = load_analysis()
+    pitch = load_pitch()
     cands, reasons = candidates(places)
     center = {"label": "el sector entre Av. Portales y Nueva San Martín, de Av. El Conquistador a El Carmen"}
     searches = json.loads((DATA / "searches_done.json").read_text()) if (DATA / "searches_done.json").exists() else []
@@ -305,7 +370,7 @@ def build():
         wa = (f"https://wa.me/{extra_wa}" if extra_wa else "") or socials.get("whatsapp") or \
             (f"https://wa.me/{p['phone_e164'].lstrip('+')}" if p.get("is_mobile") else "")
         kind = a.get("atiende", "unknown")
-        leads.append({
+        lead = {
             "id": re.sub(r"[^\w-]", "", p.get("cid") or p["key"])[:40],
             "name": p["name"],
             "rubro": p["rubro"],
@@ -341,7 +406,10 @@ def build():
             "tip": a.get("tip", ""),
             "score": score,
             "score_breakdown": breakdown,
-        })
+        }
+        lead["offer"] = offer_for(p, lead, a)
+        lead["pitch"] = pitch.get(lead["id"], {})
+        leads.append(lead)
     return leads, missing, reasons, places, center, searches
 
 
