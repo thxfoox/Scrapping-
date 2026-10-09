@@ -837,7 +837,7 @@ footer.site p { margin: 0 0 8px; }
         <li>${icon("star")}<span>${stars}</span></li>
         <li>${icon("phone")}<span>${phone}</span></li>
         <li>${icon("pin")}<span>${esc(l.address)}</span></li>
-        ${l.hours && l.hours.length ? `<li>${icon("clock")}<span>${esc(todayHours(l) || "Ver horario completo abajo")}</span></li>` : `<li>${icon("clock")}<span>Horario no publicado en Maps</span></li>`}
+        ${l.hours && l.hours.length ? `<li>${icon("clock")}<span>${esc(todayHours(l) || "Ver horario completo abajo")}</span></li>` : `<li>${icon("clock")}<span>${l.hours_hint && !/temporalmente|permanentemente/i.test(l.hours_hint) ? esc(l.hours_hint) + " · horario completo en Maps" : "Horario no publicado en Maps"}</span></li>`}
       </ul>
       <div class="tags">${ownerTag(l)}${presenceTags(l)}${l.unclaimed ? '<span class="tag tag-claim">Ficha sin reclamar</span>' : ""}</div>
       <p class="summary">${esc(l.resumen)}</p>

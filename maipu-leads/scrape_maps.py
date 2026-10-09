@@ -254,9 +254,17 @@ REVIEW_TOTAL_JS = """
     const m = (e.getAttribute('aria-label') || '').trim().match(/^([\\d.,\\s]+)\\s*(opini|reseñ)/);
     if (m) return parseInt(m[1].replace(/\\D/g, '')) || 0;
   }
+  for (const e of document.querySelectorAll('div, span')) {  // newer layout: plain text "1,205 opiniones"
+    const t = e.firstChild && e.firstChild.nodeType === 3 ? e.firstChild.textContent.trim() : '';
+    const m = t.match(/^([\\d.,\\s]+)\\s*(opiniones|reseñas)$/);
+    if (m) return parseInt(m[1].replace(/\\D/g, '')) || 0;
+  }
   return 0;
 }
 """
+# newer layout shows 5 reviews and a "Ver más opiniones (N)" button instead of an endless list
+MORE_REVIEWS = ('button[aria-label^="Ver más opiniones"], button[aria-label^="Más opiniones"], '
+                'button[aria-label^="Ver más reseñas"], button[aria-label^="Más reseñas"]')
 
 HERO_JS = """
 () => {
@@ -320,16 +328,25 @@ def make_place_action(store: dict, review_scrolls: int):
         store["url"] = page.url
         if not await tab.count():
             return
-        total = await page.evaluate(REVIEW_TOTAL_JS)
+        total = await page.evaluate(REVIEW_TOTAL_JS)  # 0 when the counter isn't rendered yet
+        target = min(6, total) if total else 6
         try:
             await tab.first.click()
             # the overview already holds up to 3 reviews, so wait for the reviews list itself to fill
-            await page.wait_for_function(f"document.querySelectorAll('div.jftiEf').length >= {min(6, max(total, 1))}",
-                                         timeout=9000)
+            await page.wait_for_function(f"document.querySelectorAll('div.jftiEf').length >= {target}", timeout=9000)
         except Exception:
             pass
         await page.wait_for_timeout(900)
-        for _ in range(review_scrolls if total > 10 else 0):
+        more = page.locator(MORE_REVIEWS)
+        if await more.count():
+            try:
+                shown = await page.evaluate("document.querySelectorAll('div.jftiEf').length")
+                await more.first.click()
+                await page.wait_for_function(f"document.querySelectorAll('div.jftiEf').length > {shown}", timeout=9000)
+            except Exception:
+                pass
+            await page.wait_for_timeout(700)
+        for _ in range(review_scrolls if (total == 0 or total > 10) else 0):
             n = await page.evaluate(REVIEWS_JS_SCROLL)
             await page.wait_for_timeout(1100 + random.randint(0, 500))
             if n < 0:
@@ -359,13 +376,16 @@ def safe_name(key: str) -> str:
     return re.sub(r"[^\w-]", "_", key)[:120]
 
 
-async def details(limit: int, radius: float, review_scrolls: int, workers: int):
+async def details(limit: int, radius: float, review_scrolls: int, workers: int, keys: list[str] | None = None):
     index = load_json(DATA / "places_index.json", {})
     PLACES_DIR.mkdir(parents=True, exist_ok=True)
-    todo = [
-        (k, v) for k, v in sorted(index.items(), key=lambda kv: (kv[1].get("dist_km", 99), kv[1].get("dist_center_km", 99)))
-        if v.get("dist_km", 99) <= radius and not (PLACES_DIR / f"{safe_name(k)}.json").exists()
-    ][:limit]
+    if keys:  # re-read specific fichas, overwriting what was saved
+        todo = [(k, index[k]) for k in keys if k in index]
+    else:
+        todo = [
+            (k, v) for k, v in sorted(index.items(), key=lambda kv: (kv[1].get("dist_km", 99), kv[1].get("dist_center_km", 99)))
+            if v.get("dist_km", 99) <= radius and not (PLACES_DIR / f"{safe_name(k)}.json").exists()
+        ][:limit]
     log(f"{len(todo)} fichas to open (within {radius} km of the band)")
     sem = asyncio.Semaphore(workers)
     blocked = asyncio.Event()
@@ -484,6 +504,7 @@ def main():
     dp.add_argument("--radius", type=float, default=0.8)
     dp.add_argument("--review-scrolls", type=int, default=2)
     dp.add_argument("--workers", type=int, default=3)
+    dp.add_argument("--keys", default="", help="comma-separated place keys to re-read")
     sub.add_parser("reindex")
     php = sub.add_parser("photos")
     php.add_argument("--keys", default="")
@@ -498,7 +519,8 @@ def main():
         rubros = [r.strip() for r in args.rubros.split(",") if r.strip()] or None
         asyncio.run(search([p.strip() for p in args.points.split(",")], rubros, args.workers))
     elif args.cmd == "details":
-        asyncio.run(details(args.limit, args.radius, args.review_scrolls, args.workers))
+        asyncio.run(details(args.limit, args.radius, args.review_scrolls, args.workers,
+                            [k for k in args.keys.split(",") if k] or None))
     elif args.cmd == "photos":
         asyncio.run(photo_pass([k for k in args.keys.split(",") if k] or None, args.workers))
     elif args.cmd == "reindex":

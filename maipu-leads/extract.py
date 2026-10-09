@@ -203,13 +203,7 @@ def parse_hours(page: Selector) -> list[list[str]]:
         rows[m.group(1)] = hours
     if rows:
         return [[d, rows[d]] for d in DAY_NAMES if d in rows]
-    label = _first_attr(page, ['[aria-label*="horario de la semana"]', '[aria-label*="Horario"]'], "aria-label")
-    for chunk in label.split(";"):
-        chunk = chunk.split(". Ocultar")[0].split(". Mostrar")[0]
-        if "," in chunk:
-            day, hours = chunk.split(",", 1)
-            rows.append([_txt(day), _txt(hours)])
-    return rows
+    return []
 
 
 def parse_place(overview_html: str, reviews_html: str, url: str) -> dict:
@@ -257,7 +251,8 @@ def parse_place(overview_html: str, reviews_html: str, url: str) -> dict:
     unclaimed = bool(ov.css('a[data-item-id="merchant"]')) or "Reclamar esta empresa" in ov.get_all_text()
     price = re.sub(r"^Precio:\s*", "", _first_attr(ov, ['span[aria-label^="Precio"]'], "aria-label"))
     description = _first_text(ov, ["div.PYvSYb", 'div[aria-label^="Acerca de"] div.PYvSYb'])
-    open_status = _first_text(ov, ["span.ZDu9vd", "div.MkV9 span"])
+    open_status = _first_text(ov, ["span.ZDu9vd", "div.MkV9 span"]) or _txt(  # newer layout: only on the hours button
+        _first_attr(ov, ['button[data-item-id="oh"]', 'button[aria-label*="Ver más horas"]'], "aria-label"))
 
     photo = ""
     for img in ov.css("button img[src], img[src]"):

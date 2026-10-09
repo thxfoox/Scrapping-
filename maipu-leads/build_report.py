@@ -22,7 +22,7 @@ OUT = HERE.parent / "informe-leads-maipu.html"
 MONTHS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
           "septiembre", "octubre", "noviembre", "diciembre"]
 
-TIERS = {"alta": 75, "media": 55}
+TIERS = {"alta": 88, "media": 75}
 
 
 def norm(s: str) -> str:
@@ -324,7 +324,9 @@ def build():
             "platform_url": p.get("website", "") if split_website(p.get("website", ""))[1] else "",
             "has_web": bool(split_website(p.get("website", ""))[0]),
             "socials": {k: v for k, v in socials.items() if k in ("instagram", "facebook", "tiktok")},
-            "hours": p.get("hours", []),
+            "hours": p.get("hours") or [],
+            "hours_hint": re.sub(r"^(Abierto|Cerrado|Abre pronto|Cierra pronto)\s*·\s*", "",
+                                 re.sub(r"\s*·?\s*Ver más horas", "", p.get("open_status", ""))).strip(),
             "price": p.get("price", ""),
             "maps_url": maps_link(p),
             "dist_km": p["dist_km"],
