@@ -121,10 +121,18 @@ def volume_points(reviews) -> int:
 
 
 def proximity_points(km: float) -> int:
-    for limit, pts in [(0.4, 8), (0.8, 7), (1.2, 5), (1.8, 3), (2.6, 2)]:
+    """km = distance to the band between Av. Portales and Av. Sur (0 inside it)."""
+    for limit, pts in [(0.0, 8), (0.25, 7), (0.5, 5), (0.8, 3), (1.2, 2)]:
         if km <= limit:
             return pts
     return 1
+
+
+def dist_label(km: float) -> str:
+    if km <= 0:
+        return "dentro de la franja Av. Portales–Av. Sur"
+    txt = f"{round(km * 1000 / 10) * 10} m" if km < 1 else f"{str(round(km, 1)).replace('.', ',')} km"
+    return f"a {txt} de la franja Av. Portales–Av. Sur"
 
 
 ATIENDE_LABELS = {
@@ -163,8 +171,7 @@ def score_lead(p: dict, a: dict) -> tuple[int, list]:
     parts.append((label, rp + vp))
 
     km = p["dist_km"]
-    dist_label = f"{round(km * 1000 / 10) * 10} m" if km < 1 else f"{str(round(km, 1)).replace('.', ',')} km"
-    parts.append((f"Cercanía a Av. Sur con Portales ({dist_label})", proximity_points(km)))
+    parts.append((f"Cercanía: {dist_label(km)}", proximity_points(km)))
 
     if chain and mall:
         parts.append(("Cadena dentro de mall: quien atiende no decide", -18))
@@ -240,7 +247,7 @@ def build():
     places = load_places()
     analysis = load_analysis()
     cands, reasons = candidates(places)
-    center = json.loads((DATA / "center.json").read_text()) if (DATA / "center.json").exists() else config.CENTER
+    center = {"label": "la franja entre Av. Portales y Av. Sur (centro en Av. 3 Poniente)"}
     searches = json.loads((DATA / "searches_done.json").read_text()) if (DATA / "searches_done.json").exists() else []
 
     leads, missing = [], []
@@ -277,6 +284,7 @@ def build():
             "price": p.get("price", ""),
             "maps_url": maps_link(p),
             "dist_km": p["dist_km"],
+            "dist_center_km": p.get("dist_center_km", p["dist_km"]),
             "unclaimed": p.get("unclaimed", False),
             "resumen": a["resumen"],
             "elogios": a["elogios"],
@@ -296,6 +304,7 @@ def render(leads, reasons, places, center, searches):
     fecha = f"{today.day} de {MONTHS[today.month - 1]} de {today.year}"
     reviews_read = sum(len(p.get("review_items", [])) for p in places)
     radius = max((l["dist_km"] for l in leads), default=0)
+    inside = sum(1 for l in leads if l["dist_km"] <= 0)
     meta = {
         "generated": fecha,
         "fichas_revisadas": len(places),
@@ -308,14 +317,15 @@ def render(leads, reasons, places, center, searches):
             {"label": "Teléfono o WhatsApp", "max": 40},
             {"label": "Negocio local y quién atiende", "max": 27},
             {"label": "Valoración y número de reseñas", "max": 25},
-            {"label": "Cercanía a Av. Sur con Portales", "max": 8},
+            {"label": "Cercanía a la franja Av. Portales–Av. Sur", "max": 8},
         ],
         "method_note": ("Cadenas, franquicias y locales de mall restan entre 12 y 18 puntos. Sin teléfono solo entran "
                         "si tienen Instagram o email, y con menos nota. Tener web no cambia la nota: en empates va "
                         f"primero el que no tiene. Prioridad alta desde {TIERS['alta']} puntos; media desde {TIERS['media']}."),
         "methodology": (f"Datos de Google Maps extraídos con Scrapling (navegador automatizado) el {fecha}: "
-                        f"{len(searches)} búsquedas de {len(config.RUBROS)} rubros alrededor de {center.get('label', 'Av. Sur con Av. Portales')}, "
-                        f"ampliando el radio hasta {str(round(radius, 1)).replace('.', ',')} km sin salir de Maipú. "
+                        f"{len(searches)} búsquedas de {len(config.RUBROS)} rubros en {center['label']} y las villas vecinas. "
+                        "Av. Portales y Av. Sur son paralelas (a unos 300-400 m), así que la zona objetivo es la franja entre "
+                        f"ambas: {inside} negocios están dentro y el resto a menos de {str(round(radius, 1)).replace('.', ',')} km, siempre en Maipú. "
                         f"Se abrieron {len(places)} fichas y se leyeron {reviews_read:,} reseñas".replace(",", ".") +
                         ". El resumen, los elogios, los reclamos y quién atiende los redactó una IA leyendo cada ficha, "
                         "sus reseñas, las respuestas del dueño y su foto principal."),

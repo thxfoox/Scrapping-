@@ -14,9 +14,14 @@ COORDS_RE = re.compile(r"!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)")
 AT_COORDS_RE = re.compile(r"@(-?\d+\.\d+),(-?\d+\.\d+)")
 PLACE_ID_RE = re.compile(r"!19s(ChIJ[\w-]+)")
 FEATURE_ID_RE = re.compile(r"!1s(0x[0-9a-f]+:0x[0-9a-f]+)")
-TOPIC_RE = re.compile(r"^(.+?),\s*mencionad[oa]s?\s+en\s+([\d.]+)\s+reseñ", re.I)
+COUNT_WORDS = r"(?:opiniones|opinión|reseñas|reseña|revisiones|revisión)"
+TOPIC_RES = [
+    re.compile(r"^Se mencionan?\s+(.+?)\s+en\s+([\d.,\s]+?)\s*" + COUNT_WORDS, re.I),
+    re.compile(r"^(.+?),\s*mencionad[oa]s?\s+en\s+([\d.,\s]+?)\s*" + COUNT_WORDS, re.I),
+]
 STARS_RE = re.compile(r"(\d)(?:[.,]\d)?\s+estrella", re.I)
-HIST_RE = re.compile(r"(\d)\s+estrellas?,\s*([\d.]+)\s+reseñ", re.I)
+HIST_RE = re.compile(r"(\d)\s+estrellas?,\s*([\d.,\s]+?)\s*" + COUNT_WORDS, re.I)
+REVIEW_COUNT_RE = re.compile(r"([\d.,\s]+?)\s*" + COUNT_WORDS, re.I)
 
 SOCIAL_HOSTS = {
     "instagram.com": "instagram",
@@ -30,7 +35,13 @@ SOCIAL_HOSTS = {
 
 
 def _txt(value) -> str:
-    return re.sub(r"\s+", " ", str(value or "")).strip()
+    return re.sub(r"\s+", " ", str(value or "").replace("\u202f", " ").replace("\xa0", " ")).strip()
+
+
+def parse_count(text: str) -> int | None:
+    """Integer counts: '(2,613)', '2.613', '139 opiniones' -> int."""
+    digits = re.sub(r"\D", "", str(text or ""))
+    return int(digits) if digits else None
 
 
 def _first_attr(page: Selector, selectors: list[str], attr: str) -> str:
@@ -142,12 +153,16 @@ def parse_search(html: str) -> list[dict]:
         rating = None
         reviews = None
         for el in card.css('span[role="img"][aria-label]') if card else []:
-            label = el.attrib.get("aria-label", "")
+            label = _txt(el.attrib.get("aria-label", ""))
             if "estrella" in label:
                 rating = parse_number(label.split("estrella")[0])
-                m = re.search(r"([\d.]+)\s+reseñ", label)
+                m = REVIEW_COUNT_RE.search(label.split("estrella", 1)[1])
                 if m:
-                    reviews = parse_number(m.group(1))
+                    reviews = parse_count(m.group(1))
+        if card and reviews is None:
+            m = re.search(r"\(([\d.,]+)\)", card_text)
+            if m:
+                reviews = parse_count(m.group(1))
         phone_hint = ""
         m = re.search(r"(\+?56\s?)?(9\s?\d{4}\s?\d{4}|2\s?\d{4}\s?\d{4})", card_text)
         if m:
@@ -171,17 +186,23 @@ def parse_search(html: str) -> list[dict]:
 # ---------------------------------------------------------------- place pages
 
 
+DAY_NAMES = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+
+
 def parse_hours(page: Selector) -> list[list[str]]:
-    rows = []
-    for tr in page.css("table tr"):
-        cells = tr.css("td")
-        if len(cells) >= 2:
-            day = _txt(cells[0].get_all_text())
-            hours = _txt(cells[1].attrib.get("aria-label") or cells[1].get_all_text())
-            if day and hours and len(day) < 20:
-                rows.append([day, hours.replace(", ", " y ")])
+    rows = {}
+    for el in page.css("[aria-label]"):
+        label = _txt(el.attrib.get("aria-label", ""))
+        m = re.match(r"^(lunes|martes|miércoles|jueves|viernes|sábado|domingo)(\s*\([^)]*\))?,\s*(.+?)(?:,\s*Copiar el horario.*)?$", label)
+        if not m or m.group(1) in rows:
+            continue
+        hours = re.sub(r"^De\s+", "", m.group(3))
+        hours = hours.replace(", Los horarios pueden variar", "")
+        if m.group(2):
+            hours += f" (feriado{m.group(2).strip()[1:-1] and ': ' + m.group(2).strip()[1:-1]})"
+        rows[m.group(1)] = hours
     if rows:
-        return rows
+        return [[d, rows[d]] for d in DAY_NAMES if d in rows]
     label = _first_attr(page, ['[aria-label*="horario de la semana"]', '[aria-label*="Horario"]'], "aria-label")
     for chunk in label.split(";"):
         chunk = chunk.split(". Ocultar")[0].split(". Mostrar")[0]
@@ -204,10 +225,11 @@ def parse_place(overview_html: str, reviews_html: str, url: str) -> dict:
         if val is not None and 0 < val <= 5:
             rating = val
             break
-    for el in ov.css('span[aria-label*="reseña"], button[aria-label*="reseña"]'):
-        m = re.search(r"([\d.]+)\s+reseñ", el.attrib.get("aria-label", ""))
+    for el in ov.css("div.F7nice [aria-label], span[role=img][aria-label], button[aria-label]"):
+        label = _txt(el.attrib.get("aria-label", ""))
+        m = REVIEW_COUNT_RE.fullmatch(label)
         if m:
-            reviews = parse_number(m.group(1))
+            reviews = parse_count(m.group(1))
             break
 
     address = _first_attr(ov, ['button[data-item-id="address"]'], "aria-label")
@@ -247,7 +269,7 @@ def parse_place(overview_html: str, reviews_html: str, url: str) -> dict:
     final_lat, final_lng = coords_from_url(url)
 
     reviews_list, seen = [], set()
-    for el in rv.css("div[data-review-id]"):
+    for el in [*rv.css("div.jftiEf[data-review-id], div[data-review-id]"), *ov.css("div.jftiEf[data-review-id]")]:
         rid = el.attrib.get("data-review-id")
         if rid in seen or not el.css("span.wiI7pd, div.MyEned"):
             continue
@@ -265,21 +287,26 @@ def parse_place(overview_html: str, reviews_html: str, url: str) -> dict:
         text = _txt(text_el[0].get_all_text()) if text_el else ""
         owner = el.css("div.CDe7pd")
         reply = _txt(owner[0].get_all_text()) if owner else ""
+        reply = re.sub(r"^Respuesta del propietario\s*(Hace\s+\S+\s+\S+)?\s*", "", reply)
         date = _first_text(el, ["span.rsqaWe", "span.xRkPPb"])
         if text or reply:
             reviews_list.append({"stars": stars, "text": text, "date": date, "owner_reply": reply})
 
     topics = []
-    for el in rv.css("[aria-label]"):
-        m = TOPIC_RE.match(el.attrib.get("aria-label", ""))
-        if m and m.group(1) not in [t[0] for t in topics]:
-            topics.append([m.group(1), int(parse_number(m.group(2)) or 0)])
+    for page in (rv, ov):
+        for el in page.css("[aria-label]"):
+            label = _txt(el.attrib.get("aria-label", ""))
+            for rx in TOPIC_RES:
+                m = rx.match(label)
+                if m and m.group(1) not in [t[0] for t in topics]:
+                    topics.append([m.group(1), parse_count(m.group(2)) or 0])
 
     histogram = {}
-    for el in rv.css("tr[aria-label], [aria-label*='estrellas,']"):
-        m = HIST_RE.search(el.attrib.get("aria-label", ""))
-        if m:
-            histogram[m.group(1)] = int(parse_number(m.group(2)) or 0)
+    for page in (rv, ov):
+        for el in page.css("[aria-label]"):
+            m = HIST_RE.search(_txt(el.attrib.get("aria-label", "")))
+            if m:
+                histogram[m.group(1)] = parse_count(m.group(2)) or 0
 
     return {
         "name": name,

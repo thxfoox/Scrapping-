@@ -1,4 +1,4 @@
-data/photos/
-data/sheets/
+# Scraped Google Maps data, AI notes about owners and photos: kept local (public repo)
+data/
 __pycache__/
 *.tmp

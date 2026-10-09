@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Leads Maipú · Av. Sur y Portales</title>
+<title>Leads Maipú · Portales y Sur</title>
 <meta name="description" content="Informe de prospección de negocios locales en Maipú (Santiago, Chile) con contacto, reseñas resumidas y puntuación.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -493,7 +493,7 @@ footer.site p { margin: 0 0 8px; }
     </div>
     <div class="hero-body">
       <p class="eyebrow anim">__EYEBROW__</p>
-      <h1 class="anim d1">Negocios de barrio en torno a <em>Av. Sur con Av. Portales</em></h1>
+      <h1 class="anim d1">Negocios de barrio entre <em>Av. Portales y Av. Sur</em></h1>
       <p class="lede anim d2" id="lede"></p>
     </div>
     <div class="kpis" role="list">
@@ -548,7 +548,7 @@ footer.site p { margin: 0 0 8px; }
         <select class="select" id="sort">
           <option value="score">Mayor puntuación</option>
           <option value="score-asc">Menor puntuación</option>
-          <option value="dist">Más cerca de Av. Sur / Portales</option>
+          <option value="dist">Más cerca del sector</option>
           <option value="rating">Mejor valoración</option>
           <option value="reviews">Más reseñas</option>
           <option value="name">Nombre (A–Z)</option>
@@ -636,7 +636,8 @@ footer.site p { margin: 0 0 8px; }
   });
 
   // ---------- helpers ----------
-  const fmtDist = (km) => km == null ? "" : km < 1 ? `${Math.round(km * 1000 / 10) * 10} m` : `${nf1.format(km)} km`;
+  const fmtKm = (km) => km < 1 ? `${Math.round(km * 1000 / 10) * 10} m` : `${nf1.format(km)} km`;
+  const fmtDist = (km) => km == null ? "" : km <= 0 ? "En el sector" : `a ${fmtKm(km)} del sector`;
   const DAYS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
   const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   const todayName = norm(DAYS[new Date().getDay()]);
@@ -756,11 +757,11 @@ footer.site p { margin: 0 0 8px; }
     const noWebFirst = (a, b) => (a.has_web ? 1 : 0) - (b.has_web ? 1 : 0);
     switch (mode) {
       case "score-asc": return (a, b) => a.score - b.score || a.dist_km - b.dist_km;
-      case "dist": return (a, b) => a.dist_km - b.dist_km || b.score - a.score;
+      case "dist": return (a, b) => a.dist_km - b.dist_km || a.dist_center_km - b.dist_center_km || b.score - a.score;
       case "rating": return (a, b) => (b.rating || 0) - (a.rating || 0) || (b.reviews || 0) - (a.reviews || 0);
       case "reviews": return (a, b) => (b.reviews || 0) - (a.reviews || 0);
       case "name": return (a, b) => a.name.localeCompare(b.name, "es");
-      default: return (a, b) => b.score - a.score || noWebFirst(a, b) || a.dist_km - b.dist_km;
+      default: return (a, b) => b.score - a.score || noWebFirst(a, b) || a.dist_km - b.dist_km || a.dist_center_km - b.dist_center_km;
     }
   }
   function visible() {

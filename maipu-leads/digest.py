@@ -32,6 +32,10 @@ def digest(p: dict) -> str:
         flags.append("POSIBLE MALL")
     if flags:
         lines.append("flags: " + ", ".join(flags))
+    if p.get("hours"):
+        lines.append("horario: " + "; ".join(f"{d[:3]} {h}" for d, h in p["hours"]))
+    if p.get("limited_view"):
+        lines.append("OJO: vista limitada, sin reseñas cargadas")
     if p.get("description"):
         lines.append("descripción: " + short(p["description"], 300))
     if p.get("review_topics"):
