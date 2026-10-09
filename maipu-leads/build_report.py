@@ -244,7 +244,7 @@ PLATFORMS = {
     "ubereats.com": "Uber Eats", "pedidosya.cl": "PedidosYa", "pedidosya.com": "PedidosYa", "rappi.cl": "Rappi",
     "didi-food.com": "DiDi Food", "agendapro.com": "AgendaPro", "fresha.com": "Fresha", "booksy.com": "Booksy",
     "linktr.ee": "Linktree", "wa.me": "WhatsApp", "wa.link": "WhatsApp", "whatsapp.com": "WhatsApp",
-    "instagram.com": "Instagram",
+    "instagram.com": "Instagram", "sumupstore.com": "Tienda online", "mercadolibre.cl": "Mercado Libre",
     "facebook.com": "Facebook",
 }
 
