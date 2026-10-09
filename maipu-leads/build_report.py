@@ -65,7 +65,7 @@ EXCLUDE_CATEGORIES = ["banco", "cajero", "farmacia", "estacion de servicio", "ga
 
 BIG_CHAINS = ["lider", "jumbo", "unimarc", "santa isabel", "tottus", "acuenta", "mayorista 10", "alvi",
               "cruz verde", "salcobrand", "ahumada", "dr. simi", "dr simi", "oxxo", "ok market", "upa!",
-              "pronto copec", "spacio 1", "big john"]
+              "pronto copec", "punto copec", "copec", "spacio 1", "big john", "shell select"]
 
 KNOWN_CHAINS = ["juan maestro", "doggis", "telepizza", "papa john", "domino", "pizza hut", "little caesars",
                 "mcdonald", "burger king", "kfc", "subway", "starbucks", "juan valdez", "castano", "dunkin",
