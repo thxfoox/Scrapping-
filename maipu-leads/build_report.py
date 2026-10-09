@@ -13,6 +13,7 @@ from pathlib import Path
 
 import config
 import geo
+from extract import normalize_phone
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -37,7 +38,8 @@ RUBRO_RULES = [
     ("Centros de estética", ["estetic", "unas", "manicur", "pedicur", "depila", "spa", "pestan", "ceja",
                              "masaj", "cosmet", "maquill", "bronce", "belleza facial", "lifting"]),
     ("Peluquerías", ["peluquer", "salon de belleza", "estilista", "salon de peluqueria"]),
-    ("Botillerías", ["botiller", "licor", "vinoteca", "tienda de vinos", "distribuidora de bebidas", "cerveza"]),
+    ("Botillerías", ["botiller", "licor", "vinoteca", "tienda de vinos", "distribuidora de bebidas", "cerveza",
+                     "bebidas alcoholicas", "alcohol"]),
     ("Panaderías", ["panader", "amasander"]),
     ("Pastelerías", ["pastel", "reposter", "torta", "dulcer", "chocolat", "helader", "kuchen", "postre"]),
     ("Cafeterías", ["cafeter", "cafe", "coffee", "te y ", "salon de te", "brunch"]),
@@ -148,7 +150,7 @@ ATIENDE_LABELS = {
 def score_lead(p: dict, a: dict) -> tuple[int, list]:
     parts = []
     if p.get("phone"):
-        parts.append(("Teléfono móvil (sirve para WhatsApp)" if p.get("is_mobile") else "Teléfono fijo",
+        parts.append(("Teléfono móvil o WhatsApp" if p.get("is_mobile") else "Teléfono fijo",
                       40 if p.get("is_mobile") else 34))
     else:
         parts.append(("Sin teléfono: solo Instagram o email", 14))
@@ -238,6 +240,26 @@ def candidates(places: list[dict]) -> tuple[list[dict], dict]:
     return out, reasons
 
 
+PLATFORMS = {
+    "ubereats.com": "Uber Eats", "pedidosya.cl": "PedidosYa", "pedidosya.com": "PedidosYa", "rappi.cl": "Rappi",
+    "didi-food.com": "DiDi Food", "agendapro.com": "AgendaPro", "fresha.com": "Fresha", "booksy.com": "Booksy",
+    "linktr.ee": "Linktree", "wa.me": "WhatsApp", "whatsapp.com": "WhatsApp", "instagram.com": "Instagram",
+    "facebook.com": "Facebook",
+}
+
+
+def split_website(url: str) -> tuple[str, str]:
+    """Own website vs. a page on someone else's platform (delivery apps, booking tools, link hubs)."""
+    if not url:
+        return "", ""
+    from urllib.parse import urlparse
+    host = urlparse(url).netloc.lower().removeprefix("www.")
+    for domain, name in PLATFORMS.items():
+        if host == domain or host.endswith("." + domain):
+            return "", name
+    return url, ""
+
+
 def maps_link(p: dict) -> str:
     if p.get("place_id"):
         from urllib.parse import quote
@@ -265,9 +287,18 @@ def build():
             continue
         if a.get("rubro"):
             p["rubro"] = a["rubro"]
-        score, breakdown = score_lead(p, a)
+        extra_wa = re.sub(r"\D", "", a.get("whatsapp", ""))
+        wa_number = ""
+        if extra_wa:  # WhatsApp number published by the business itself (e.g. on its listing photo)
+            wa_info = normalize_phone(extra_wa)
+            if not p.get("phone"):
+                p.update(wa_info)
+            elif wa_info["phone_e164"] != p.get("phone_e164"):
+                wa_number = wa_info["phone"]
+        score, breakdown = score_lead({**p, "is_mobile": p.get("is_mobile") or bool(extra_wa)}, a)
         socials = p.get("socials", {})
-        wa = socials.get("whatsapp") or (f"https://wa.me/{p['phone_e164'].lstrip('+')}" if p.get("is_mobile") else "")
+        wa = (f"https://wa.me/{extra_wa}" if extra_wa else "") or socials.get("whatsapp") or \
+            (f"https://wa.me/{p['phone_e164'].lstrip('+')}" if p.get("is_mobile") else "")
         kind = a.get("atiende", "unknown")
         leads.append({
             "id": re.sub(r"[^\w-]", "", p.get("cid") or p["key"])[:40],
@@ -277,12 +308,16 @@ def build():
             "phone": p.get("phone", ""),
             "phone_e164": p.get("phone_e164", ""),
             "whatsapp": wa,
+            "wa_number": wa_number,
+            "phone_is_mobile": bool(p.get("is_mobile")),
             "email": a.get("email", ""),
             "address": re.sub(r",?\s*Región Metropolitana.*$", "", p.get("address", "")).strip(),
             "rating": p.get("rating"),
             "reviews": p.get("reviews") or 0,
-            "website": p.get("website", ""),
-            "has_web": bool(p.get("website")),
+            "website": split_website(p.get("website", ""))[0],
+            "platform": split_website(p.get("website", ""))[1],
+            "platform_url": p.get("website", "") if split_website(p.get("website", ""))[1] else "",
+            "has_web": bool(split_website(p.get("website", ""))[0]),
             "socials": {k: v for k, v in socials.items() if k in ("instagram", "facebook", "tiktok")},
             "hours": p.get("hours", []),
             "price": p.get("price", ""),

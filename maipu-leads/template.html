@@ -801,6 +801,7 @@ footer.site p { margin: 0 0 8px; }
     if (l.socials?.instagram) t.push(`<a class="tag tag-social" href="${esc(l.socials.instagram)}" target="_blank" rel="noopener noreferrer">${icon("ig")}Instagram</a>`);
     if (l.socials?.facebook) t.push(`<a class="tag tag-social" href="${esc(l.socials.facebook)}" target="_blank" rel="noopener noreferrer">${icon("fb")}Facebook</a>`);
     if (!t.length) t.push(`<span class="tag tag-none">${icon("globe")}Sin web ni redes</span>`);
+    if (l.platform) t.push(`<a class="tag tag-social" href="${esc(l.platform_url)}" target="_blank" rel="noopener noreferrer">${icon("globe")}${esc(l.platform)}</a>`);
     return t.join("");
   }
   function ownerTag(l) {
@@ -813,7 +814,10 @@ footer.site p { margin: 0 0 8px; }
     const st = crmGet(l.id);
     const offset = RING * (1 - l.score / 100);
     const stars = l.rating ? `<span class="rating-num">${nf1.format(l.rating)}</span> <span class="stars" aria-hidden="true">${"★".repeat(Math.round(l.rating))}${"☆".repeat(5 - Math.round(l.rating))}</span> · ${nf.format(l.reviews || 0)} reseñas` : "Sin reseñas todavía";
-    const phone = l.phone ? `<a href="tel:${esc(l.phone_e164)}">${esc(l.phone)}</a>${l.whatsapp ? ' <span class="dist">· móvil, sirve para WhatsApp</span>' : ' <span class="dist">· fijo</span>'}` : `<span>Sin teléfono en Maps${l.socials?.instagram ? " · contactar por Instagram" : ""}${l.email ? ` · ${esc(l.email)}` : ""}</span>`;
+    const phoneKind = l.wa_number
+      ? ` <span class="dist">· fijo · WhatsApp ${esc(l.wa_number)}</span>`
+      : l.phone_is_mobile ? ' <span class="dist">· móvil, sirve para WhatsApp</span>' : ' <span class="dist">· fijo</span>';
+    const phone = l.phone ? `<a href="tel:${esc(l.phone_e164)}">${esc(l.phone)}</a>${phoneKind}` : `<span>Sin teléfono en Maps${l.socials?.instagram ? " · contactar por Instagram" : ""}${l.email ? ` · ${esc(l.email)}` : ""}</span>`;
     const when = st.contacted && st.contactedAt ? `· ${new Date(st.contactedAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}` : "";
     const why = (l.score_breakdown || []).map(([label, pts]) => `<li class="${pts < 0 ? "neg" : ""}"><span>${esc(label)}</span><b>${pts > 0 ? "+" : ""}${pts}</b></li>`).join("");
     return `
