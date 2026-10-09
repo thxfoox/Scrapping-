@@ -27,7 +27,9 @@ from extract import coords_from_url, ids_from_url, parse_place, parse_search
 
 DATA = Path(__file__).parent / "data"
 PLACES_DIR = DATA / "places"
-CHROMIUM = os.environ.get("SCRAPLING_EXECUTABLE_PATH", "/opt/pw-browsers/chromium")
+# a preinstalled Chromium if there is one, else the browser `scrapling install` downloads
+CHROMIUM = os.environ.get("SCRAPLING_EXECUTABLE_PATH") or (
+    "/opt/pw-browsers/chromium" if os.path.exists("/opt/pw-browsers/chromium") else None)
 HL = "hl=es-419&gl=cl"
 
 BLOCK_MARKERS = ("/sorry/", "unusual traffic", "tráfico inusual")
