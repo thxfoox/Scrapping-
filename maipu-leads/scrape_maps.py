@@ -47,7 +47,7 @@ def save_json(path: Path, data):
     tmp.replace(path)
 
 
-def new_session(max_pages=3) -> AsyncStealthySession:
+def new_session(max_pages=3, allow_photos=True) -> AsyncStealthySession:
     # Stealth mode hides navigator.webdriver; without it Google Maps serves a "limited view"
     # with no reviews tab. Certificate checks stay on (Scrapling's stealth default turns them off).
     return AsyncStealthySession(
@@ -61,7 +61,8 @@ def new_session(max_pages=3) -> AsyncStealthySession:
         retries=2,
         max_pages=max_pages,
         blocked_domains={"doubleclick.net", "googlesyndication.com", "google-analytics.com", "googletagmanager.com",
-                         "googleusercontent.com", "ggpht.com", "streetviewpixels-pa.googleapis.com"},
+                         "streetviewpixels-pa.googleapis.com",
+                         *(() if allow_photos else ("googleusercontent.com", "ggpht.com"))},
     )
 
 
@@ -257,6 +258,29 @@ REVIEW_TOTAL_JS = """
 }
 """
 
+HERO_JS = """
+() => {
+  for (const img of document.querySelectorAll('button[jsaction*="heroHeaderImage"] img, button[aria-label^="Foto de"] img')) {
+    if (img.src && img.src.includes('googleusercontent') && !/\\/a-?\\//.test(img.src)) return img.src;
+  }
+  for (const el of document.querySelectorAll('[style*="googleusercontent.com/"]')) {
+    const m = (el.getAttribute('style') || '').match(/url\\("?(https:\\/\\/lh\\d\\.googleusercontent\\.com\\/[^")]+)/);
+    if (m && !/\\/a-?\\//.test(m[1])) return m[1];
+  }
+  return '';
+}
+"""
+
+
+async def wait_hero(page, ms=3000) -> str:
+    for _ in range(ms // 250):
+        src = await page.evaluate(HERO_JS)
+        if src:
+            return src
+        await page.wait_for_timeout(250)
+    return ""
+
+
 TAB_SEL = ('button[role="tab"][aria-label^="Revisiones"], button[role="tab"][aria-label^="Reseñas"], '
            'button[role="tab"][aria-label^="Opiniones"]')
 
@@ -291,6 +315,7 @@ def make_place_action(store: dict, review_scrolls: int):
                 await page.wait_for_timeout(700)
         except Exception:
             pass
+        store["hero"] = await wait_hero(page, 2500)
         store["overview"] = await page.content()
         store["url"] = page.url
         if not await tab.count():
@@ -325,6 +350,8 @@ async def fetch_place(s, entry: dict, review_scrolls: int) -> dict:
     data = parse_place(store.get("overview", ""), reviews_html, store.get("url") or entry["url"])
     data["maps_url"] = entry["url"]
     data["limited_view"] = store.get("limited", False)
+    if not data.get("photo") and store.get("hero"):
+        data["photo"] = re.sub(r"=w\d+-h\d+[^&]*$", "=w480-h360-k-no", store["hero"])
     return data
 
 
@@ -381,6 +408,44 @@ async def details(limit: int, radius: float, review_scrolls: int, workers: int):
         log("STOPPED: Google is rate limiting this session")
 
 
+async def photo_pass(only_keys: list[str] | None, workers: int):
+    """Fill in the main photo for saved fichas that have none (overview only, no reviews)."""
+    files = sorted(PLACES_DIR.glob("*.json"))
+    todo = []
+    for f in files:
+        d = json.loads(f.read_text())
+        if not d.get("photo") and (not only_keys or d["key"] in only_keys):
+            todo.append((f, d))
+    log(f"{len(todo)} fichas without photo")
+    sem = asyncio.Semaphore(workers)
+    async with new_session(workers) as s:
+        await warm_up(s)
+
+        async def worker(f, d):
+            async with sem:
+                store = {}
+
+                async def act(page):
+                    await handle_consent(page)
+                    try:
+                        await page.wait_for_selector("h1", timeout=15000)
+                    except Exception:
+                        pass
+                    store["hero"] = await wait_hero(page, 5000)
+
+                try:
+                    await s.fetch(d["maps_url"] + "?" + HL, page_action=act, page_setup=block_heavy)
+                except Exception as e:
+                    log("photo failed", d["name"], e)
+                    return
+                if store.get("hero"):
+                    d["photo"] = re.sub(r"=w\d+-h\d+[^&]*$", "=w480-h360-k-no", store["hero"])
+                    save_json(f, d)
+                log(("photo ok " if store.get("hero") else "no photo ") + d["name"])
+
+        await asyncio.gather(*(worker(f, d) for f, d in todo))
+
+
 def reindex():
     """Recompute distances in the index after the sector geometry changes."""
     index = load_json(DATA / "places_index.json", {})
@@ -420,6 +485,9 @@ def main():
     dp.add_argument("--review-scrolls", type=int, default=2)
     dp.add_argument("--workers", type=int, default=3)
     sub.add_parser("reindex")
+    php = sub.add_parser("photos")
+    php.add_argument("--keys", default="")
+    php.add_argument("--workers", type=int, default=3)
     pp = sub.add_parser("probe")
     pp.add_argument("url")
     pp.add_argument("--out", default="/tmp/probe.html")
@@ -431,6 +499,8 @@ def main():
         asyncio.run(search([p.strip() for p in args.points.split(",")], rubros, args.workers))
     elif args.cmd == "details":
         asyncio.run(details(args.limit, args.radius, args.review_scrolls, args.workers))
+    elif args.cmd == "photos":
+        asyncio.run(photo_pass([k for k in args.keys.split(",") if k] or None, args.workers))
     elif args.cmd == "reindex":
         reindex()
     elif args.cmd == "probe":
